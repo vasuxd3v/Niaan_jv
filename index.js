@@ -67,4 +67,4 @@ cars.forEach((car, i) => {
   );
 });
 
-client.login(process.env.token);
+client.login(process.env.MTA2NzczODAyMzQ3MjY3Njg4NQ.GBbeRC.TPJzBdv_qL6S-B6GwDnvqhtd7rhbBJuUFaOyEg);
