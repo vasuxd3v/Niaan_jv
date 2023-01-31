@@ -24,7 +24,7 @@ const { GoogleSpreadsheet } = require("google-spreadsheet");
 
 const convert = {
   car: "JV || Vehicles",
-  rim: "JV || Rims",
+  rim: "JV || Rims"
 };
 
 const creds = require("./creds.json");
@@ -38,15 +38,13 @@ client.getItems = async (item) => {
 
   await sheets.loadInfo();
   const rows = await sheets.sheetsByTitle[convert[item]].getRows();
-  return rows
-    .map((row) => {
-      const [a, name, b, cost] = row._rawData;
-      return {
-        name: name ? name.replaceAll(" ", "") : name,
-        cost,
-      };
-    })
-    .filter((r) => r.name && r.cost);
+  return rows.map((row) => {
+    const [a, name, b, cost] = row._rawData;
+    return {
+      name: name ? name.replaceAll(" ", "") : name,
+      cost,
+    };
+  }).filter((r) => r.name && r.cost);
 };
 
 Object.defineProperty(Array.prototype, "pager", {
@@ -57,19 +55,4 @@ Object.defineProperty(Array.prototype, "pager", {
   },
 });
 
-// easy json convert
-// const costs = fs.readFileSync("./costs.txt").toString().split("\r\n");
-// const cars = fs.readFileSync("./cars.txt").toString().split("\r\n");
-
-// cars.forEach((car, i) => {
-//   fs.appendFileSync(
-//     "./end.txt",
-//     `{ "name": "${car}", "cost": "${costs[i]}" },\n`,
-//     "utf-8"
-//   );
-// });
-
-client.login(
-  process.env.MTA2NzczODAyMzQ3MjY3Njg4NQ.GBbeRC.TPJzBdv_qL6S -
-    B6GwDnvqhtd7rhbBJuUFaOyEg
-);
+client.login(process.env.token);
