@@ -7,6 +7,8 @@ const {
   MessageButton,
 } = require("discord.js");
 
+const mclient = require("../../index.js");
+
 module.exports = {
   name: "show",
   description: "Show the list of items, that you can compare!",
@@ -16,12 +18,6 @@ module.exports = {
       type: "STRING",
       required: true,
       description: "The category of the items to show.",
-      choices: ["car", "rim"].map((f) => {
-        return {
-          name: f,
-          value: f,
-        };
-      }),
     },
   ],
   /**
@@ -40,12 +36,17 @@ module.exports = {
         ephemeral: true,
       });
 
-    const pages = items.pager(10);
+    const pages = items.pager(8);
     const embeds = pages.map((p, i) => {
       const embed = new MessageEmbed()
         .setTitle(`List of items:`)
         .setDescription(
-          p.map((t) => `**${t.name}** - **\`${t.cost}\`**`).join("\n")
+          p
+            .map(
+              (t) =>
+                `**${t.name}**:\n» \`Cost\`: **\`${t.value}\`** | \`Brulee\`: **\`${t.brulee}\`** | \`Demand\`: **\`${t.demand}\`**`
+            )
+            .join("\n\n")
         )
         .setColor("GOLD")
         .setFooter({

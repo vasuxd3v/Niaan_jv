@@ -15,39 +15,50 @@ const client = new Discord.Client({
 
 module.exports = client;
 client.commands = new Discord.Collection();
-fs.readdirSync("./handler").forEach((file) => {
-  require(`./handler/${file}`);
-});
 
 /* SPREADSHEET */
 const { GoogleSpreadsheet } = require("google-spreadsheet");
 
-const convert = {
-  car: "JV || Vehicles",
-  rim: "JV || Rims",
-};
-
 const creds = require("./creds.json");
 const sheets = new GoogleSpreadsheet(
-  //"1mmR4448P7jtQFhavvjVyw89laDFYt9RCrGq49-NMC48"
   "1M5sv4lnwe8wyhs8juPzaCdhd7t4Jc9d6aInmQhOiMns"
 );
 
-client.getItems = async (item) => {
-  await sheets.useServiceAccountAuth(creds);
+(async () => {
+  await sheets.useServiceAccountAuth(creds); // LOAD
+})();
 
+client.nameFormat = (n) => n.split(" || ")[1].toLowerCase();
+
+client.getTitles = async () => {
   await sheets.loadInfo();
-  const rows = await sheets.sheetsByTitle[convert[item]].getRows();
-  return rows
-    .map((row) => {
-      const [a, name, b, cost] = row._rawData;
-      return {
-        name: name ? name.replaceAll(" ", "") : name,
-        cost,
-      };
-    })
-    .filter((r) => r.name && r.cost);
+  return Object.keys(sheets.sheetsByTitle);
 };
+
+client.getItems = async (item) => {
+  await sheets.loadInfo();
+
+  const sheet = (await client.getTitles()).find((t) =>
+    t.toLowerCase().includes(item)
+  );
+
+  const rows = await sheets.sheetsByTitle[sheet].getRows();
+  return rows.map((row) => {
+    const data = row._rawData;
+    // if(data[0] !== "") console.log(data);
+    const headers = row._sheet.headerValues;
+    const obj = {};
+    data.forEach((o, i) =>
+      o ? (obj[headers[i].toLowerCase()] = o.trim()) : null
+    );
+    obj.category = sheet.replace("JV || ", "");
+    return obj;
+  });
+};
+
+// (async() => {
+//   console.log(await client.getItems("spoilers"))
+// })()
 
 Object.defineProperty(Array.prototype, "pager", {
   value: function (n) {
@@ -57,19 +68,7 @@ Object.defineProperty(Array.prototype, "pager", {
   },
 });
 
-// easy json convert
-// const costs = fs.readFileSync("./costs.txt").toString().split("\r\n");
-// const cars = fs.readFileSync("./cars.txt").toString().split("\r\n");
-
-// cars.forEach((car, i) => {
-//   fs.appendFileSync(
-//     "./end.txt",
-//     `{ "name": "${car}", "cost": "${costs[i]}" },\n`,
-//     "utf-8"
-//   );
-// });
-
-client.login(
-  process.env.MTA2NzczODAyMzQ3MjY3Njg4NQ.GBbeRC.TPJzBdv_qL6S -
-    B6GwDnvqhtd7rhbBJuUFaOyEg
-);
+fs.readdirSync("./handler").forEach((file) => {
+  require(`./handler/${file}`);
+});
+client.login(process.env.token);

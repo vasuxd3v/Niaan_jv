@@ -29,6 +29,14 @@ readdirSync("./commands").forEach(async (dir) => {
     console.log(`Loaded Slash Command ${option} | ${name}`);
 
     if (option === "✅") {
+      if (name === "show")
+        data.options[0].choices = (await client.getTitles()).map((f) => {
+          return {
+            name: client.nameFormat(f),
+            value: client.nameFormat(f),
+          };
+        });
+
       client.commands.set(name, {
         ...data,
         run: file.run,

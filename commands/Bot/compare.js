@@ -15,12 +15,14 @@ module.exports = {
    * @param {CommandInteractionOptionResolver} options
    */
   run: async (client, interaction, options) => {
-    let done = true;
-
-    const items = await client.getItems("car");
+    const titles = await client.getTitles();
+    const itemsPromise = await Promise.all(
+      titles.map(async (t) => await client.getItems(client.nameFormat(t)))
+    );
+    const items = [].concat(...itemsPromise).filter((i) => i.name);
 
     const makeEmbed = (text) => {
-      return new MessageEmbed().setTitle(text).setColor("GOLD");
+      return new MessageEmbed().setTitle(text).setColor("#27476e");
     };
 
     await interaction.followUp({
@@ -34,23 +36,44 @@ module.exports = {
 
     const collector = interaction.channel.createMessageCollector({
       filter: (m) => m.author.id === interaction.user.id,
-      time: 60000,
+      time: 45000,
       max: 2,
     });
 
-    const msgs = [];
+    const lists = [];
+    let err = false;
+    let derr = false;
 
-    collector.on("collect", async (m) => {
-      const list = m.content.split(",");
-      const filter = list.map((f) => {
-        if (
-          !items.find(
-            (item) =>
-              item.name.toLowerCase() === f.replace(" ", "").toLowerCase()
-          )
-        )
-          return false;
-      });
+    collector.on("collect", async (message) => {
+      const seperated = message.content.split(",").filter((m) => m);
+      const founds = [];
+      const list = seperated
+        .map((c) => {
+          const split = c.trim().split(" ");
+          const amount = Number(split[0]);
+          const ltrim = isNaN(amount)
+            ? split[0].trim().toLowerCase()
+            : split[1].trim().toLowerCase();
+          if (founds.includes(ltrim)) return;
+
+          const found = items.find((i) => i.name.toLowerCase() === ltrim);
+          if (!found) {
+            err = true;
+            return;
+          }
+          found.name = ltrim;
+
+          const dupes = seperated.filter((n) => {
+            let sp = n.trim().split(" ");
+            return sp[sp.length > 1 ? 1 : 0].toLowerCase() === ltrim;
+          }).length;
+
+          if (dupes > 1) {
+            founds.push(ltrim);
+            return (derr = true);
+          } else return isNaN(amount) ? [1, found] : [amount, found];
+        })
+        .filter((l) => l);
 
       if (list.length > 8) {
         await interaction.followUp({
@@ -62,76 +85,93 @@ module.exports = {
         return collector.options.max++;
       }
 
-      if (filter.filter((fi) => fi === false).length > 0) {
+      if (err) {
         await interaction.followUp({
           content: interaction.user.toString(),
           embeds: [
             makeEmbed(
-              `Please provide valid items! Use the above list!`
-            ).setDescription(
-              `\`\`\`${items.map((c) => c.name).join(", ")}\`\`\``
+              `Please provide valid items! Use \`/show\` command for all available items!`
             ),
           ],
         });
+        err = false;
+        return collector.options.max++;
+      } else if (derr) {
+        await interaction.followUp({
+          content: interaction.user.toString(),
+          embeds: [
+            makeEmbed(`You are not allowed to provide duplicate items!!`),
+          ],
+        });
+        derr = false;
         return collector.options.max++;
       }
 
-      if (done) {
-        done = false;
+      if (lists.length < 1) {
         await interaction.followUp({
           content: interaction.user.toString(),
           embeds: [makeEmbed(`Please send the second set of items!`)],
         });
 
-        msgs.push(m);
+        lists.push(list);
         return collector.options.max++;
-      } else {
-        msgs.push(m);
-        return collector.stop();
       }
-    });
 
-    collector.on("end", async (ms) => {
-      const listOf = [];
-
-      const mapped = msgs.map((m) => {
-        let curr = [];
-        const map = m.content.split(",").map((co) => {
-          co = co.replace(" ", "").toLowerCase();
-          const item = items.find((c) => c.name.toLowerCase() === co);
-          if (!item) return;
-          curr.push(item.name);
-          return Number(item.cost.replace("M", ""));
+      const mapped = [lists[0], list].map((l) => {
+        return l.map((value) => {
+          const [amount, item] = value;
+          return {
+            cost: amount * Number(item.value.replace("M", "")),
+            demand: amount * Number(item.demand),
+          };
         });
-
-        listOf.push(curr);
-        return map;
       });
 
-      const totals = mapped.map((t) => {
-        return t.reduce((prev, current) => {
-          return Number(Number(prev + current).toFixed(2));
+      const reduce = (t, v) =>
+        t.reduce((prev, current) => {
+          return Number(Number(prev + current[v]).toFixed(2));
         }, 0);
+
+      const totals = mapped.map((t, i) => {
+        let ob = {};
+        ob[`cost${i + 1}`] = reduce(t, "cost");
+        ob[`demand${i + 1}`] = reduce(t, "demand");
+        return ob;
       });
 
-      const set1 = totals[0];
-      const set2 = totals[1];
-      let st = `**First set (${set1}M):** \`\`\`${listOf[0].join(
-        ", "
-      )}\`\`\`\n**Second set (${set2}M):** \`\`\`${listOf[1].join(", ")}\`\`\``;
-      let t;
+      const { cost1, demand1 } = totals[0];
+      const { cost2, demand2 } = totals[1];
+
+      const map = (arr) =>
+        arr.map((a) => `${a[0] > 1 ? `${a[0]} ` : ""}${a[1].name}`).join(", ");
+
+      let st = `**First set (${cost1}M):** \`\`\`${map(
+        lists[0]
+      )}\`\`\`\n**Second set (${cost2}M):** \`\`\`${map(list)}\`\`\``;
+
+      let value;
       const format = (s) => `**\`${Number(s).toFixed(2)}M\`**`;
 
-      if (set1 > set2)
-        t = `The first set is winning by ${format(set1 - set2)}!`;
-      else if (set1 === set2) t = `It ends in a draw!`;
-      else if (set1 < set2)
-        t = `The second set is winning by ${format(set2 - set1)}!`;
+      let w1 = `The first set is winning by ${format(cost1 - cost2)}!`;
+      let w2 = `The second set is winning by ${format(cost2 - cost1)}!`;
+      let d1 = "**winning** by demand!";
+      let d2 = "**loosing** by demand!";
+
+      if (cost1 > cost2 && demand1 > demand2) value = `${w1} And ${d1}`;
+      if (cost1 > cost2 && demand2 > demand1) value = `${w1} But ${d2}`;
+      if (cost2 > cost1 && demand2 > demand1) value = `${w2} And ${d1}`;
+      if (cost2 > cost1 && demand1 > demand2) value = `${w2} But ${d2}`;
+      if (cost1 === cost2 && demand1 > demand2)
+        value = `Its a draw! But first set is ${d1}`;
+      if (cost1 === cost2 && demand2 > demand1)
+        value = `Its a draw! But second set is ${d1}`;
 
       await interaction.followUp({
-        content: interaction.user.toString(),
+        content: `Requested by: ${interaction.user.toString()}`,
         embeds: [
-          new MessageEmbed().setDescription(`${st}\n${t}`).setColor("GOLD"),
+          new MessageEmbed()
+            .setDescription(`${st}\n${value}`)
+            .setColor("#27476e"),
         ],
       });
     });
