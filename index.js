@@ -19,14 +19,6 @@ client.commands = new Discord.Collection();
 /* SPREADSHEET */
 const { GoogleSpreadsheet } = require("google-spreadsheet");
 
-<<<<<<< HEAD
-=======
-const convert = {
-  car: "JV || Vehicles",
-  rim: "JV || Rims"
-};
-
->>>>>>> 4718201b1614a8596e183e337354d3ceabbaf383
 const creds = require("./creds.json");
 const sheets = new GoogleSpreadsheet(
   "1M5sv4lnwe8wyhs8juPzaCdhd7t4Jc9d6aInmQhOiMns"
@@ -76,10 +68,7 @@ Object.defineProperty(Array.prototype, "pager", {
   },
 });
 
-<<<<<<< HEAD
 fs.readdirSync("./handler").forEach((file) => {
   require(`./handler/${file}`);
 });
-=======
->>>>>>> 4718201b1614a8596e183e337354d3ceabbaf383
 client.login(process.env.token);
