@@ -18,7 +18,6 @@ client.commands = new Discord.Collection();
 
 /* SPREADSHEET */
 const { GoogleSpreadsheet } = require("google-spreadsheet");
-
 const creds = require("./creds.json");
 const sheets = new GoogleSpreadsheet(
   "1M5sv4lnwe8wyhs8juPzaCdhd7t4Jc9d6aInmQhOiMns"
