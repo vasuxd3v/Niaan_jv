@@ -48,7 +48,7 @@ readdirSync("./commands").forEach(async (dir) => {
 });
 
 client.on("ready", async () => {
-  const g = await client.guilds.fetch("906599480508432435");
+  const g = await client.guilds.fetch("1048657710633197648");
   await g.commands.set(commands);
   console.log(chalk.green.blue.bold("Commands set!"));
 });
