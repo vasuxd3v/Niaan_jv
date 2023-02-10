@@ -48,7 +48,7 @@ module.exports = {
             )
             .join("\n\n")
         )
-        .setColor("GOLD")
+        .setColor("#27476e")
         .setFooter({
           text: `Page: ${i + 1}/${pages.length}`,
         });
