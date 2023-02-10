@@ -165,6 +165,13 @@ module.exports = {
         value = `Its a draw! But first set is ${d1}`;
       if (cost1 === cost2 && demand2 > demand1)
         value = `Its a draw! But second set is ${d1}`;
+      if (cost1 === cost2 && demand2 === demand1)
+         value = `Its a draw! And the Demands are also same for both.`;
+      if (cost1 > cost2 && demand1 === demand2)
+       value = `${w1} And Its a draw in demand.`;
+      if (cost2 > cost1 && demand1 === demand2)
+       value = `${w2} And Its a draw in demand.`;
+    
 
       await interaction.followUp({
         content: `Requested by: ${interaction.user.toString()}`,
