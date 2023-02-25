@@ -152,10 +152,10 @@ module.exports = {
       let value;
       const format = (s) => `**\`${Number(s).toFixed(2)}M\`**`;
 
-      let w1 = `The first set is winning by ${format(cost1 - cost2)}!`;
-      let w2 = `The second set is winning by ${format(cost2 - cost1)}!`;
-      let d1 = "**winning** by demand!";
-      let d2 = "**losing** by demand!";
+      let w1 = `The first set is wins by ${format(cost1 - cost2)}!`;
+      let w2 = `The second set is wins by ${format(cost2 - cost1)}!`;
+      let d1 = "**wins** by demand!";
+      let d2 = "**loses** by demand!";
 
       if (cost1 > cost2 && demand1 > demand2) value = `${w1} And ${d1}`;
       if (cost1 > cost2 && demand2 > demand1) value = `${w1} But ${d2}`;
