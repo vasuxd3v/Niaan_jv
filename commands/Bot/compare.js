@@ -6,6 +6,8 @@ const {
 } = require("discord.js");
 
 module.exports = {
+  cooldown: 30,
+  cooldownMessage: "You have to wait 30 seconds before using this command again!",
   name: "compare",
   description: "Compare your items!",
   /**
