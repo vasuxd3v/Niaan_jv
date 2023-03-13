@@ -65,7 +65,7 @@ module.exports = {
       case "show":
         const showEmbed = new MessageEmbed()
           .setTitle("Show Command")
-          .setDescription("This command allows you to show something")
+          .setDescription("This command allows you to show the price and demand of items according to thier category!")
           .setColor("#27476e");
         await interaction.followUp({ embeds: [showEmbed] });
         break;
