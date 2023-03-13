@@ -65,7 +65,7 @@ module.exports = {
       case "show":
         const showEmbed = new MessageEmbed()
           .setTitle("Show Command")
-          .setDescription("This command allows you to show the price and demand of items according to thier category!")
+          .setDescription("The **`/show`** command is a very usefull command for those playing **jailbreak**, as it provides an easy-to-use interface for viewing essential information about various in-game items. This feature is particularly useful for those who are new to the **tranding** or those who want to stay informed about the current state of the market.\n By using the `/show` command, players can quickly see the names of various jailbreak items, their current demand, and their prices in Brulee, a virtual currency used within the game. These items are categorized according to their type, making it simple for players to find the information they need.\n -------------------------------------------------------------------------------- \n One of the standout features of the `/show` command is its user-friendly design. Even those who are unfamiliar with the trading, in general, will find it easy to navigate and understand. This simplicity is essential, as it ensures that all players, regardless of their experience level, can access and utilize this critical **Jailbreak Values Bot**")
           .setColor("#27476e");
         await interaction.followUp({ embeds: [showEmbed] });
         break;
