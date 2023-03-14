@@ -1,63 +1,42 @@
-const {
-  MessageEmbed,
-  CommandInteraction,
-  CommandInteractionOptionResolver,
-  Client,
-} = require("discord.js");
+const { MessageEmbed, CommandInteraction, CommandInteractionOptionResolver, Client } = require("discord.js");
 
 module.exports = {
   name: "view",
-  description: "View detail on any particular item!",
-  options: [
-    {
-      name: "name",
-      required: true,
-      type: "STRING",
-      description: "The name of item you are searching for.",
-    },
-  ],
-  /**
-   *
-   * @param {Client} client
-   * @param {CommandInteraction} interaction
-   * @param {CommandInteractionOptionResolver} options
-   */
-  run: async (client, interaction, options) => {
-    const item = options.getString("name");
-
+  description: "🔎 View details about a particular item.",
+  options: [{
+    name: "name",
+    required: true,
+    type: "STRING",
+    description: "🔍 The name of the item you are searching for.",
+  }],
+  
+  async run(client, interaction, options) {
+    const itemName = options.getString("name");
     const titles = await client.getTitles();
-    const itemsPromise = await Promise.all(
-      await titles.map(async (t) => await client.getItems(client.nameFormat(t)))
-    );
-
-    const items = []
-      .concat(...itemsPromise)
-      .filter((i) => i.name && i.name.toLowerCase() === item.toLowerCase());
-    const found = items[0];
-    if (!found)
+    const itemPromises = titles.map(async (t) => await client.getItems(client.nameFormat(t)));
+    const items = (await Promise.all(itemPromises)).flat();
+    const foundItem = items.find(i => i.name && i.name.toLowerCase() === itemName.toLowerCase());
+    
+    if (!foundItem) {
       return await interaction.followUp({
-        content: `${interaction.user}, this item does not exist! Use \`/show\` command to see the list of available items!!`,
-        allowedMentions: {
-          users: [interaction.user.id],
-        },
+        content: `❌ ${interaction.user}, this item does not exist! Use \`/show\` command to see the list of available items!!`,
+        allowedMentions: { users: [interaction.user.id] },
       });
-
-    const embed = new MessageEmbed().setTitle(found.name).setColor("#27476e");
-    const vs = Object.entries(found);
-    vs.forEach((v) => {
-      const [k, n] = v;
-      const format = k.charAt(0).toUpperCase() + k.slice(1).toLowerCase();
-      embed.addFields([
-        {
-          name: format,
-          value: `**\`${n}\`**`,
-        },
-      ]);
+    }
+    
+    const embed = new MessageEmbed()
+      .setTitle(`🔎 ${foundItem.name}`)
+      .setColor("#FCD12A")
+      .setDescription(`Here are the details for **${foundItem.name}**:`);
+    
+    Object.entries(foundItem).forEach(([key, value]) => {
+      const formattedKey = key.charAt(0).toUpperCase() + key.slice(1).toLowerCase();
+      embed.addFields({ name: `🔹 ${formattedKey}`, value: `**\`${value}\`**` });
     });
-
+    
     await interaction.followUp({
-      content: interaction.user.toString(),
+      content: `✅ ${interaction.user}, here are the details for **${foundItem.name}**:`,
       embeds: [embed],
     });
-  },
+  }
 };
