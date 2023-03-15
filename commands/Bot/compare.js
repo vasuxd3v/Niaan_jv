@@ -151,27 +151,38 @@ module.exports = {
 
       let value;
       const format = (s) => `**\`${Number(s).toFixed(2)}M\`**`;
-
-      let w1 = `The first set is wins by ${format(cost1 - cost2)}!`;
-      let w2 = `The second set is wins by ${format(cost2 - cost1)}!`;
+      
+      let w1 = `The first set wins by ${format(cost1 - cost2)}!`;
+      let w2 = `The second set wins by ${format(cost2 - cost1)}!`;
       let d1 = "**wins** by demand!";
-      let d2 = "**loses** by demand!";
-
-      if (cost1 > cost2 && demand1 > demand2) value = `${w1} And ${d1}`;
-      if (cost1 > cost2 && demand2 > demand1) value = `${w1} But ${d2}`;
-      if (cost2 > cost1 && demand2 > demand1) value = `${w2} And ${d1}`;
-      if (cost2 > cost1 && demand1 > demand2) value = `${w2} But ${d2}`;
-      if (cost1 === cost2 && demand1 > demand2)
-        value = `Its a draw! But first set is ${d1}`;
-      if (cost1 === cost2 && demand2 > demand1)
-        value = `Its a draw! But second set is ${d1}`;
-      if (cost1 === cost2 && demand2 === demand1)
-         value = `Its a draw! And the Demands are also same for both.`;
-      if (cost1 > cost2 && demand1 === demand2)
-       value = `${w1} And Its a draw in demand.`;
-      if (cost2 > cost1 && demand1 === demand2)
-       value = `${w2} And Its a draw in demand.`;
-    
+      let d2 = "**lose** by demand!";
+      
+      if (cost1 > cost2) {
+        if (demand1 > demand2) {
+          value = `${w1} And the first set ${d1}`;
+        } else if (demand2 > demand1) {
+          value = `${w1} But the second set ${d2}`;
+        } else {
+          value = `${w1} And the demands are also the same for both.`;
+        }
+      } else if (cost2 > cost1) {
+        if (demand2 > demand1) {
+          value = `${w2} And the second set ${d1}`;
+        } else if (demand1 > demand2) {
+          value = `${w2} But the first set ${d2}`;
+        } else {
+          value = `${w2} And the demands are also the same for both.`;
+        }
+      } else {
+        if (demand1 > demand2) {
+          value = `Its a draw! But the first set ${d1}`;
+        } else if (demand2 > demand1) {
+          value = `Its a draw! But the second set ${d2}`;
+        } else {
+          value = `Its a draw! And the demands are also the same for both.`;
+        }
+      }
+      
 
       await interaction.followUp({
         content: `Requested by: ${interaction.user.toString()}`,
