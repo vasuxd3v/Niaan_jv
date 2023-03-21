@@ -29,7 +29,7 @@ const sheets = new GoogleSpreadsheet(
 })();
 
 client.nameFormat = (n) => n.split(" || ")[1].toLowerCase();
-client.guild = config.guild;
+client.config = config;
 client.getTitles = async () => {
   await sheets.loadInfo();
   return Object.keys(sheets.sheetsByTitle);
@@ -82,4 +82,4 @@ fs.readdirSync("./handler").forEach((file) => {
   require(`./handler/${file}`);
 });
 
-client.login(config.token || process.env.token);
+client.login(config.yes ? config.token : process.env.token);
