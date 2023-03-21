@@ -13,12 +13,12 @@ client.on("interactionCreate", async (interaction) => {
   } else if (interaction.isAutocomplete()) {
     const search = interaction.options.getString("name");
 
-    const items = await client.items();
+    const items = client.items;
     let find = items.filter(
       (i) => i.name && i.name.toLowerCase().startsWith(search.toLowerCase())
     );
 
-    if (find.length > 25) find = find.slice(0, 25);
+    if (find.size > 25) find = find.first(25);
 
     await interaction.respond(
       find.map((f) => {
@@ -27,6 +27,6 @@ client.on("interactionCreate", async (interaction) => {
           value: f.name.toLowerCase(),
         };
       })
-    );
+    ).catch(e => {});
   }
 });

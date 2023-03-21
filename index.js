@@ -56,19 +56,7 @@ client.getItems = async (item) => {
   });
 };
 
-client.items = async () => {
-  return (
-    await Promise.all(
-      (
-        await client.getTitles()
-      ).map(async (t) => await client.getItems(client.nameFormat(t)))
-    )
-  ).flat();
-};
-
-// (async() => {
-//   console.log(await client.getItems("spoilers"))
-// })()
+client.items = new Discord.Collection();
 
 Object.defineProperty(Array.prototype, "pager", {
   value: function (n) {

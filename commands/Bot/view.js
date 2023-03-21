@@ -14,7 +14,7 @@ module.exports = {
   ],
   async run(client, interaction, options) {
     const itemName = options.getString("name");
-    const items = await client.items();
+    const items = client.items;
     const foundItem = items.find(
       (i) => i.name && i.name.toLowerCase() === itemName.toLowerCase()
     );
