@@ -9,21 +9,14 @@ module.exports = {
       required: true,
       type: "STRING",
       description: "🔍 The name of the item you are searching for.",
+      autocomplete: true,
     },
   ],
-
   async run(client, interaction, options) {
     const itemName = options.getString("name");
-    const items = (
-      await Promise.all(
-        (
-          await client.getTitles()
-        ).map(async (t) => await client.getItems(client.nameFormat(t)))
-      )
-    ).flat();
+    const items = await client.items();
     const foundItem = items.find(
-      (i) =>
-        i.name && i.name.toLowerCase() === itemName.toLowerCase()
+      (i) => i.name && i.name.toLowerCase() === itemName.toLowerCase()
     );
 
     if (!foundItem) {
@@ -39,7 +32,8 @@ module.exports = {
       .setDescription(`Here are the details for **${foundItem.name}**:`);
 
     Object.entries(foundItem).forEach(([key, value]) => {
-      let formattedKey = key.charAt(0).toUpperCase() + key.slice(1).toLowerCase();
+      let formattedKey =
+        key.charAt(0).toUpperCase() + key.slice(1).toLowerCase();
       let formattedValue = value;
 
       if (key.toLowerCase() === "demand" && value > 3) {
@@ -58,9 +52,11 @@ module.exports = {
     });
 
     if (foundItem.demand > 3) {
-      embed.setFooter("Red color shows higher demand of item\nNote- demands are out of 5"); // add a footer message to the embed
+      embed.setFooter({
+        text: "Red color shows higher demand of item\nNote- demands are out of 5",
+      }); // add a footer message to the embed
     } else {
-      embed.setFooter("Note- demands are out of 5");
+      embed.setFooter({ text: "Note- demands are out of 5" });
     }
 
     await interaction.followUp({

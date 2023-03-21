@@ -50,10 +50,13 @@ module.exports = {
       const list = seperated
         .map((c) => {
           const split = c.trim().split(" ");
-          const amount = Number(split[0]);
-          const ltrim = isNaN(amount)
-            ? split[0].trim().toLowerCase()
-            : split[1].trim().toLowerCase();
+          let amount, ltrim;
+          let f1 = split[0];
+          if (isNaN(Number(f1))) ltrim = split.join("_");
+          else {
+            amount = Number(f1);
+            ltrim = split.slice(1, split.length).join("_");
+          }
           if (founds.includes(ltrim)) return;
 
           const found = items.find((i) => i.name.toLowerCase() === ltrim);
@@ -151,12 +154,12 @@ module.exports = {
 
       let value;
       const format = (s) => `**\`${Number(s).toFixed(2)}M\`**`;
-      
+
       let w1 = `The first set wins by ${format(cost1 - cost2)}!`;
       let w2 = `The second set wins by ${format(cost2 - cost1)}!`;
       let d1 = "**wins** by demand!";
       let d2 = "**lose** by demand!";
-      
+
       if (cost1 > cost2) {
         if (demand1 > demand2) {
           value = `${w1} And the first set ${d1}`;
@@ -182,7 +185,6 @@ module.exports = {
           value = `Its a draw! And the demands are also the same for both.`;
         }
       }
-      
 
       await interaction.followUp({
         content: `Requested by: ${interaction.user.toString()}`,
@@ -192,6 +194,8 @@ module.exports = {
             .setColor("#27476e"),
         ],
       });
+
+      collector.stop();
     });
   },
 };

@@ -1,6 +1,7 @@
 const fs = require("fs");
 const Discord = require("discord.js");
 require("dotenv").config();
+const config = require("./testconfig.json");
 
 const client = new Discord.Client({
   intents: [
@@ -28,7 +29,7 @@ const sheets = new GoogleSpreadsheet(
 })();
 
 client.nameFormat = (n) => n.split(" || ")[1].toLowerCase();
-
+client.guild = config.guild;
 client.getTitles = async () => {
   await sheets.loadInfo();
   return Object.keys(sheets.sheetsByTitle);
@@ -55,6 +56,16 @@ client.getItems = async (item) => {
   });
 };
 
+client.items = async () => {
+  return (
+    await Promise.all(
+      (
+        await client.getTitles()
+      ).map(async (t) => await client.getItems(client.nameFormat(t)))
+    )
+  ).flat();
+};
+
 // (async() => {
 //   console.log(await client.getItems("spoilers"))
 // })()
@@ -70,4 +81,5 @@ Object.defineProperty(Array.prototype, "pager", {
 fs.readdirSync("./handler").forEach((file) => {
   require(`./handler/${file}`);
 });
-client.login(process.env.token);
+
+client.login(config.token || process.env.token);

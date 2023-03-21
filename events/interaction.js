@@ -10,5 +10,23 @@ client.on("interactionCreate", async (interaction) => {
     let { options } = interaction;
 
     cmd.run(client, interaction, options);
+  } else if (interaction.isAutocomplete()) {
+    const search = interaction.options.getString("name");
+
+    const items = await client.items();
+    let find = items.filter(
+      (i) => i.name && i.name.toLowerCase().startsWith(search.toLowerCase())
+    );
+
+    if (find.length > 25) find = find.slice(0, 25);
+
+    await interaction.respond(
+      find.map((f) => {
+        return {
+          name: f.name,
+          value: f.name.toLowerCase(),
+        };
+      })
+    );
   }
 });
