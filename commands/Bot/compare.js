@@ -3,6 +3,10 @@ const {
   CommandInteraction,
   CommandInteractionOptionResolver,
   Client,
+  MessageActionRow,
+  MessageButton,
+  Modal,
+  TextInputComponent,
 } = require("discord.js");
 
 module.exports = {
@@ -15,17 +19,66 @@ module.exports = {
    * @param {CommandInteractionOptionResolver} options
    */
   run: async (client, interaction, options) => {
-    const titles = await client.getTitles();
-    const itemsPromise = await Promise.all(
-      titles.map(async (t) => await client.getItems(client.nameFormat(t)))
-    );
-    const items = [].concat(...itemsPromise).filter((i) => i.name);
+    const items = client.items;
 
-    const makeEmbed = (text) => {
-      return new MessageEmbed().setTitle(text).setColor("#27476e");
+    const makeEmbed = (text, descrip) => {
+      const embed = new MessageEmbed().setTitle(text).setColor("#27476e");
+      if (descrip) embed.setDescription(descrip);
+      return embed;
     };
 
+    const thread = await interaction.channel?.threads.create({
+      name: `${interaction.user.username}-thread`,
+      type: "GUILD_PRIVATE_THREAD",
+      reason: "Private compare required.",
+    });
+
+    await thread.members.add(interaction.user.id);
+
     await interaction.followUp({
+      content: interaction.user.toString(),
+      embeds: [makeEmbed(`Please move to your private thread ${thread}!`)],
+      ephemeral: true,
+    });
+
+    const row = new MessageActionRow().addComponents([
+      new MessageButton()
+        .setCustomId("start")
+        .setLabel("☑️ Get Started!")
+        .setStyle("SUCCESS"),
+    ]);
+
+    const initial = await thread.send({
+      content: interaction.user.toString(),
+      embeds: [
+        makeEmbed(
+          `Hey! Welcome to your thread, get started by clicking the button below!!`
+        ),
+      ],
+      components: [row],
+    });
+
+    try {
+      const confirmation = await initial.awaitMessageComponent({
+        filter: (i) =>
+          i.user.id === interaction.user.id && i.customId === "start",
+        time: 20000,
+      });
+
+      await confirmation.deferUpdate().catch((e) => null);
+    } catch (e) {
+      if (thread) await thread.delete();
+      await interaction.followUp({
+        content: interaction.user.toString(),
+        embeds: [
+          makeEmbed(`Your thread was deleted as you did not click the button!`),
+        ],
+        ephemeral: true,
+      });
+      return;
+    }
+
+    await thread.send({
       content: interaction.user.toString(),
       embeds: [
         makeEmbed(
@@ -34,23 +87,38 @@ module.exports = {
       ],
     });
 
-    const collector = interaction.channel.createMessageCollector({
+    const collector = thread.createMessageCollector({
       filter: (m) => m.author.id === interaction.user.id,
-      time: 45000,
+      time: 60000,
       max: 2,
     });
 
     const lists = [];
-    let err = false;
-    let derr = false;
+    let err = false,
+      derr = false,
+      lerr = false;
 
     collector.on("collect", async (message) => {
-      const seperated = message.content.split(",").filter((m) => m);
+      const seperated = message.content
+        .toLowerCase()
+        .split(",")
+        .filter((m) => m);
       const founds = [];
       const list = seperated
         .map((c) => {
           const split = c.trim().split(" ");
-          let amount, ltrim;
+          let amount,
+            ltrim,
+            lvl = false;
+
+          let isHyper = split.includes("hyper");
+
+          if (isHyper) {
+            lvl = split.pop();
+            if (isNaN(Number(lvl)) || Number(lvl) > 5 || Number(lvl) < 1)
+              return (lerr = true);
+          }
+
           let f1 = split[0];
           if (isNaN(Number(f1))) ltrim = split.join("_");
           else {
@@ -59,12 +127,19 @@ module.exports = {
           }
           if (founds.includes(ltrim)) return;
 
-          const found = items.find((i) => i.name.toLowerCase() === ltrim);
-          if (!found) {
-            err = true;
-            return;
-          }
-          found.name = ltrim;
+          const found = !isHyper
+            ? items.find(
+                (i) =>
+                  (i.name.toLowerCase() === ltrim && i.name.endsWith(lvl)) ||
+                  i.name.toLowerCase().includes(ltrim) ||
+                  ltrim.includes(i.name.toLowerCase())
+              )
+            : items.find(
+                (i) =>
+                  i.name.toLowerCase().includes(ltrim) && i.name.endsWith(lvl)
+              );
+
+          if (!found) return (err = true);
 
           const dupes = seperated.filter((n) => {
             let sp = n.trim().split(" ");
@@ -79,7 +154,7 @@ module.exports = {
         .filter((l) => l);
 
       if (list.length > 8) {
-        await interaction.followUp({
+        await thread.send({
           content: interaction.user.toString(),
           embeds: [
             makeEmbed(`You are only allowed to send a maximum of 8 items!`),
@@ -89,7 +164,7 @@ module.exports = {
       }
 
       if (err) {
-        await interaction.followUp({
+        await thread.send({
           content: interaction.user.toString(),
           embeds: [
             makeEmbed(
@@ -100,7 +175,7 @@ module.exports = {
         err = false;
         return collector.options.max++;
       } else if (derr) {
-        await interaction.followUp({
+        await thread.send({
           content: interaction.user.toString(),
           embeds: [
             makeEmbed(`You are not allowed to provide duplicate items!!`),
@@ -108,10 +183,43 @@ module.exports = {
         });
         derr = false;
         return collector.options.max++;
+      } else if (lerr) {
+        await thread.send({
+          content: interaction.user.toString(),
+          embeds: [
+            makeEmbed(
+              `Please provide the level of the hyper (Between 1-5)! Eg: \`Hyper_red 4\``
+            ),
+          ],
+        });
+        lerr = false;
+        return collector.options.max++;
       }
 
-      if (lists.length < 1) {
-        await interaction.followUp({
+      const fil = list
+        .map((l) => {
+          const { name } = l[1];
+          const details = name.split("_");
+          const [iname, color, _lvl, ilvl] = details;
+          return !l[1]?.value ? `${iname} ${color} ${ilvl}` : null;
+        })
+        .filter((v) => v);
+
+      if (fil.length > 0) {
+        await thread.send({
+          content: interaction.user.toString(),
+          embeds: [
+            makeEmbed(
+              `The following items do not have a value in the database yet!`,
+              `\`\`\`${fil.join(", ")}\`\`\``
+            ),
+          ],
+        });
+        return collector.options.max++;
+      }
+
+      if (lists.length === 0) {
+        await thread.send({
           content: interaction.user.toString(),
           embeds: [makeEmbed(`Please send the second set of items!`)],
         });
@@ -162,17 +270,17 @@ module.exports = {
 
       if (cost1 > cost2) {
         if (demand1 > demand2) {
-          value = `${w1} And the first set ${d1}`;
+          value = `${w1} And also ${d1}`;
         } else if (demand2 > demand1) {
-          value = `${w1} But the second set ${d2}`;
+          value = `${w1} But ${d2}`;
         } else {
           value = `${w1} And the demands are also the same for both.`;
         }
       } else if (cost2 > cost1) {
         if (demand2 > demand1) {
-          value = `${w2} And the second set ${d1}`;
+          value = `${w2} And also ${d1}`;
         } else if (demand1 > demand2) {
-          value = `${w2} But the first set ${d2}`;
+          value = `${w2} But ${d2}`;
         } else {
           value = `${w2} And the demands are also the same for both.`;
         }
@@ -186,16 +294,78 @@ module.exports = {
         }
       }
 
-      await interaction.followUp({
-        content: `Requested by: ${interaction.user.toString()}`,
+      const finalData = {
+        content: `Requested by: ${interaction.user.toString()}. This thread will be deleted in \`15\`seconds!`,
         embeds: [
           new MessageEmbed()
             .setDescription(`${st}\n${value}`)
             .setColor("#27476e"),
         ],
-      });
+      };
+
+      await thread.send(finalData);
 
       collector.stop();
+      setTimeout(async () => {
+        if (thread) await thread.delete();
+        finalData.content = `Requested by: ${interaction.user.toString()}!`;
+        finalData.components = [
+          new MessageActionRow().addComponents([
+            new MessageButton()
+              .setLabel("Feedback")
+              .setCustomId("feedback")
+              .setStyle("PRIMARY"),
+          ]),
+        ];
+
+        const feedback = await interaction.channel.send(finalData);
+        const fcollector = feedback.createMessageComponentCollector({
+          filter: (i) =>
+            i.user.id === interaction.user.id && i.customId === "feedback",
+          time: 15000,
+          max: 1,
+        });
+
+        fcollector.on("collect", async (i) => {
+          const modal = new Modal()
+            .setTitle("Feedback form")
+            .setCustomId("feedback")
+            .addComponents([
+              new MessageActionRow().addComponents([
+                new TextInputComponent()
+                  .setLabel("Feedback")
+                  .setCustomId("feedbacktext")
+                  .setPlaceholder("Your feedback.")
+                  .setStyle("PARAGRAPH")
+                  .setRequired(true),
+              ]),
+            ]);
+
+          await i.showModal(modal);
+        });
+
+        fcollector.on("end", async (c, r) => {
+          if (r === "time") {
+            finalData.components[0].setDisabled(true);
+            await feedback.edit(finalData);
+          }
+        });
+      }, 15000);
+    });
+
+    collector.on("end", async (c, r) => {
+      if (r === "time") {
+        if (thread) await thread.delete();
+        await interaction.followUp({
+          content: interaction.user.toString(),
+          embeds: [
+            makeEmbed(
+              "Your thread was deleted due to inactivity for `60` seconds!"
+            ),
+          ],
+          ephemeral: true,
+        });
+      }
     });
   },
 };

@@ -1,8 +1,9 @@
+const { MessageEmbed } = require("discord.js");
 const client = require("../index");
 
 client.on("interactionCreate", async (interaction) => {
   if (interaction.isCommand()) {
-    await interaction.deferReply().catch((e) => null);
+    await interaction.deferReply({ ephemeral: true }).catch((e) => null);
 
     let cmd = client.commands.get(interaction.commandName);
     if (!cmd) return;
@@ -20,13 +21,41 @@ client.on("interactionCreate", async (interaction) => {
 
     if (find.size > 25) find = find.first(25);
 
-    await interaction.respond(
-      find.map((f) => {
-        return {
-          name: f.name,
-          value: f.name.toLowerCase(),
-        };
-      })
-    ).catch(e => {});
+    await interaction
+      .respond(
+        find.map((f) => {
+          return {
+            name: f.name,
+            value: f.name.toLowerCase(),
+          };
+        })
+      )
+      .catch((e) => {});
+  } else if (interaction.isModalSubmit()) {
+    const { fields, customId } = interaction;
+    if (customId === "feedback") {
+      const feedback = fields.getTextInputValue("feedbacktext");
+      const privateChannel = await client.channels.fetch(
+        client.config.yes ? client.config.channel : process.env.channel
+      );
+
+      await interaction.reply({
+        content: "Your feedback has been successfully sent! Thank you so much!",
+        ephemeral: true
+      });
+
+      await privateChannel.send({
+        embeds: [
+          new MessageEmbed()
+            .setAuthor({
+              name: interaction.user.username,
+              iconURL: interaction.user.displayAvatarURL(),
+            })
+            .setTitle("New Feedback!")
+            .setDescription(`\`\`\`${feedback}\`\`\``)
+            .setColor("#27476e"),
+        ],
+      });
+    }
   }
 });

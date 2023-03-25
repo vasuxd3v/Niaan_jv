@@ -9,7 +9,7 @@ client.on("ready", async () => {
   setInterval(async () => {
     console.log("Spreadsheet: Data updated!");
     await update();
-  }, 60000);
+  }, 2 * 60000);
 });
 
 const update = async () => {
