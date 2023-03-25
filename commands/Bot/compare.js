@@ -346,7 +346,7 @@ module.exports = {
 
         fcollector.on("end", async (c, r) => {
           if (r === "time") {
-            finalData.components[0].setDisabled(true);
+            finalData.components[0].components[0].setDisabled(true);
             await feedback.edit(finalData);
           }
         });
