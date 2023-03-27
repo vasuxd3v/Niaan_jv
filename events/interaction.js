@@ -3,8 +3,6 @@ const client = require("../index");
 
 client.on("interactionCreate", async (interaction) => {
   if (interaction.isCommand()) {
-    await interaction.deferReply({ ephemeral: true }).catch((e) => null);
-
     let cmd = client.commands.get(interaction.commandName);
     if (!cmd) return;
 

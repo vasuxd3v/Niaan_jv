@@ -35,7 +35,7 @@ module.exports = {
 
     await thread.members.add(interaction.user.id);
 
-    await interaction.followUp({
+    await interaction.reply({
       content: interaction.user.toString(),
       embeds: [makeEmbed(`Please move to your private thread ${thread}!`)],
       ephemeral: true,
@@ -233,7 +233,7 @@ module.exports = {
           const [amount, item] = value;
           return {
             cost: amount * Number(item.value.replace("M", "")),
-            demand: amount * Number(item.demand),
+            demand: Number(item.demand),
           };
         });
       });

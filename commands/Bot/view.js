@@ -1,4 +1,9 @@
-const { MessageEmbed } = require("discord.js");
+const {
+  MessageEmbed,
+  CommandInteraction,
+  CommandInteractionOptionResolver,
+  Client,
+} = require("discord.js");
 
 module.exports = {
   name: "view",
@@ -12,6 +17,12 @@ module.exports = {
       autocomplete: true,
     },
   ],
+  /**
+   *
+   * @param {Client} client
+   * @param {CommandInteraction} interaction
+   * @param {CommandInteractionOptionResolver} options
+   */
   async run(client, interaction, options) {
     const itemName = options.getString("name");
     const items = client.items;
@@ -20,9 +31,10 @@ module.exports = {
     );
 
     if (!foundItem) {
-      return await interaction.followUp({
+      return await interaction.reply({
         content: `❌ ${interaction.user}, this item does not exist! Use \`/show\` command to see the list of available items!!`,
         allowedMentions: { users: [interaction.user.id] },
+        ephemeral: true,
       });
     }
 
@@ -32,6 +44,7 @@ module.exports = {
       .setDescription(`Here are the details for **${foundItem.name}**:`);
 
     Object.entries(foundItem).forEach(([key, value]) => {
+      if (key === "url") return;
       let formattedKey =
         key.charAt(0).toUpperCase() + key.slice(1).toLowerCase();
       let formattedValue = value;
@@ -59,7 +72,9 @@ module.exports = {
       embed.setFooter({ text: "Note- demands are out of 5" });
     }
 
-    await interaction.followUp({
+    if (foundItem.url) embed.setThumbnail(foundItem.url);
+
+    await interaction.reply({
       content: `✅ ${interaction.user}, here are the details for **${foundItem.name}**:`,
       embeds: [embed],
     });

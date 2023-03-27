@@ -30,6 +30,7 @@ const sheets = new GoogleSpreadsheet(
 
 client.nameFormat = (n) => n.split(" || ")[1].toLowerCase();
 client.config = config;
+
 client.getTitles = async () => {
   await sheets.loadInfo();
   return Object.keys(sheets.sheetsByTitle);
@@ -45,7 +46,6 @@ client.getItems = async (item) => {
   const rows = await sheets.sheetsByTitle[sheet].getRows();
   return rows.map((row) => {
     const data = row._rawData;
-    // if(data[0] !== "") console.log(data);
     const headers = row._sheet.headerValues;
     const obj = {};
     data.forEach((o, i) =>

@@ -22,6 +22,6 @@ const update = async () => {
   ).flat();
 
   items.forEach((i) => {
-    if (!client.items.get(i.name)) client.items.set(i.name, i);
+    client.items.set(i.name, i);
   });
 };
