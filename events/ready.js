@@ -4,6 +4,9 @@ const client = require("../index");
 client.on("ready", async () => {
   console.log(client.user.username + " is online!");
 
+  //Website
+  require("../api/server");
+
   // Update loop
   await update();
   setInterval(async () => {
