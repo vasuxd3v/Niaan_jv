@@ -15,10 +15,10 @@ module.exports = {
   /**
    *
    * @param {Client} client
-   * @param {CommandInteraction} interaction
-   * @param {CommandInteractionOptionResolver} options
+   * @param {CommandInteraction | Message} context
+   * @param {CommandInteractionOptionResolver | String[]} options
    */
-  run: async (client, interaction, options) => {
+  run: async (client, context, options, isMessage) => {
     const titles = await client.getTitles();
     const itemsPromise = await Promise.all(
       titles.map(async (t) => await client.getItems(client.nameFormat(t)))
@@ -34,7 +34,7 @@ module.exports = {
       type: "GUILD_PRIVATE_THREAD",
     });
 
-    await interaction.followUp({
+    await context.channel.send({
       content: interaction.user.toString(),
       embeds: [makeEmbed(`Please move to your private thread ${thread}!`)],
     });
@@ -98,7 +98,7 @@ module.exports = {
     //       .size < 1
     //   ) {
     //     await thread.delete();
-    //     await interaction.followUp({
+    //     await context.channel.send({
     //       content: interaction.user.toString(),
     //       embeds: [
     //         makeEmbed(

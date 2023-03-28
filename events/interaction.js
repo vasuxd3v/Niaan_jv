@@ -39,7 +39,7 @@ client.on("interactionCreate", async (interaction) => {
 
       await interaction.reply({
         content: "Your feedback has been successfully sent! Thank you so much!",
-        ephemeral: true
+        ephemeral: true,
       });
 
       await privateChannel.send({

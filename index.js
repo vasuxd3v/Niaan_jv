@@ -43,8 +43,8 @@ client.getItems = async (item) => {
     t.toLowerCase().includes(item)
   );
 
-  const rows = await sheets.sheetsByTitle[sheet].getRows();
-  return rows.map((row) => {
+  const rows = await sheets.sheetsByTitle[sheet]?.getRows();
+  return rows?.map((row) => {
     const data = row._rawData;
     const headers = row._sheet.headerValues;
     const obj = {};

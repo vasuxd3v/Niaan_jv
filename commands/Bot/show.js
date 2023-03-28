@@ -7,8 +7,6 @@ const {
   MessageButton,
 } = require("discord.js");
 
-const mclient = require("../../index.js");
-
 module.exports = {
   name: "show",
   description: "Show the list of items, that you can compare!",
@@ -23,15 +21,20 @@ module.exports = {
   /**
    *
    * @param {Client} client
-   * @param {CommandInteraction} interaction
-   * @param {CommandInteractionOptionResolver} options
+   * @param {CommandInteraction} context
+   * @param {CommandInteractionOptionResolver | String[]} options
+   * @param {Boolean} isMessage
    */
-  run: async (client, interaction, options) => {
+  run: async (client, context, options, isMessage) => {
     const category = options.getString("category");
     const items = await client.getItems(category);
+    
+    const details = {
+      user: isMessage ? context.author : context.user,
+    };
 
     if (items.length === 0)
-      return await interaction.followUp({
+      return await context.reply({
         content: "Theres currently no item available in this category!",
         ephemeral: true,
       });
@@ -70,14 +73,14 @@ module.exports = {
     ];
 
     let page = 0;
-    const msg = await interaction.followUp({
+    const msg = await context.reply({
       embeds: [embeds[page]],
       components,
       fetchReply: true,
     });
 
     const collector = msg.createMessageComponentCollector({
-      filter: (i) => i.user.id === interaction.user.id,
+      filter: (i) => i.user.id === details.user.id,
       idle: 15000,
     });
 

@@ -7,6 +7,7 @@ const {
   MessageButton,
   Modal,
   TextInputComponent,
+  Message,
 } = require("discord.js");
 
 module.exports = {
@@ -15,11 +16,16 @@ module.exports = {
   /**
    *
    * @param {Client} client
-   * @param {CommandInteraction} interaction
-   * @param {CommandInteractionOptionResolver} options
+   * @param {CommandInteraction | Message} context
+   * @param {CommandInteractionOptionResolver | String[]} options
+   * @param {Boolean} isMessage
    */
-  run: async (client, interaction, options) => {
+  run: async (client, context, options, isMessage) => {
     const items = client.items;
+
+    const details = {
+      user: isMessage ? context.author : details.user,
+    };
 
     const makeEmbed = (text, descrip) => {
       const embed = new MessageEmbed().setTitle(text).setColor("#27476e");
@@ -27,17 +33,35 @@ module.exports = {
       return embed;
     };
 
-    const thread = await interaction.channel?.threads.create({
-      name: `${interaction.user.username}-thread`,
+    if (
+      !context.channel.threads ||
+      context.guild.channels.cache.find(
+        (c) =>
+          c.type === "GUILD_PRIVATE_THREAD" &&
+          c.name === `${details.user.username}-thread`
+      )
+    )
+      return await context.reply({
+        content: details.user.toString(),
+        embeds: [makeEmbed(`You can not start the process again!!`)],
+        ephemeral: true,
+      });
+
+    const thread = await context.channel?.threads.create({
+      name: `${details.user.username}-thread`,
       type: "GUILD_PRIVATE_THREAD",
       reason: "Private compare required.",
     });
 
-    await thread.members.add(interaction.user.id);
+    await thread.members.add(details.user.id);
 
-    await interaction.reply({
-      content: interaction.user.toString(),
-      embeds: [makeEmbed(`Please move to your private thread ${thread}!`)],
+    await context.reply({
+      content: details.user.toString(),
+      embeds: [
+        makeEmbed(
+          `Please move to your private thread ${thread}!`
+        ),
+      ],
       ephemeral: true,
     });
 
@@ -49,7 +73,7 @@ module.exports = {
     ]);
 
     const initial = await thread.send({
-      content: interaction.user.toString(),
+      content: details.user.toString(),
       embeds: [
         makeEmbed(
           `Hey! Welcome to your thread, get started by clicking the button below!!`
@@ -60,16 +84,15 @@ module.exports = {
 
     try {
       const confirmation = await initial.awaitMessageComponent({
-        filter: (i) =>
-          i.user.id === interaction.user.id && i.customId === "start",
+        filter: (i) => i.user.id === details.user.id && i.customId === "start",
         time: 20000,
       });
 
       await confirmation.deferUpdate().catch((e) => null);
     } catch (e) {
       if (thread) await thread.delete();
-      await interaction.followUp({
-        content: interaction.user.toString(),
+      await context.channel.send({
+        content: details.user.toString(),
         embeds: [
           makeEmbed(`Your thread was deleted as you did not click the button!`),
         ],
@@ -79,7 +102,7 @@ module.exports = {
     }
 
     await thread.send({
-      content: interaction.user.toString(),
+      content: details.user.toString(),
       embeds: [
         makeEmbed(
           `Please send the first set of items!\nMake sure to seperate each item with a comma \`,\`!`
@@ -88,7 +111,7 @@ module.exports = {
     });
 
     const collector = thread.createMessageCollector({
-      filter: (m) => m.author.id === interaction.user.id,
+      filter: (m) => m.author.id === details.user.id,
       time: 60000,
       max: 2,
     });
@@ -155,7 +178,7 @@ module.exports = {
 
       if (list.length > 8) {
         await thread.send({
-          content: interaction.user.toString(),
+          content: details.user.toString(),
           embeds: [
             makeEmbed(`You are only allowed to send a maximum of 8 items!`),
           ],
@@ -165,7 +188,7 @@ module.exports = {
 
       if (err) {
         await thread.send({
-          content: interaction.user.toString(),
+          content: details.user.toString(),
           embeds: [
             makeEmbed(
               `Please provide valid items! Use \`/show\` command for all available items!`
@@ -176,7 +199,7 @@ module.exports = {
         return collector.options.max++;
       } else if (derr) {
         await thread.send({
-          content: interaction.user.toString(),
+          content: details.user.toString(),
           embeds: [
             makeEmbed(`You are not allowed to provide duplicate items!!`),
           ],
@@ -185,7 +208,7 @@ module.exports = {
         return collector.options.max++;
       } else if (lerr) {
         await thread.send({
-          content: interaction.user.toString(),
+          content: details.user.toString(),
           embeds: [
             makeEmbed(
               `Please provide the level of the hyper (Between 1-5)! Eg: \`Hyper_red 4\``
@@ -207,7 +230,7 @@ module.exports = {
 
       if (fil.length > 0) {
         await thread.send({
-          content: interaction.user.toString(),
+          content: details.user.toString(),
           embeds: [
             makeEmbed(
               `The following items do not have a value in the database yet!`,
@@ -220,7 +243,7 @@ module.exports = {
 
       if (lists.length === 0) {
         await thread.send({
-          content: interaction.user.toString(),
+          content: details.user.toString(),
           embeds: [makeEmbed(`Please send the second set of items!`)],
         });
 
@@ -295,7 +318,7 @@ module.exports = {
       }
 
       const finalData = {
-        content: `Requested by: ${interaction.user.toString()}. This thread will be deleted in \`15\`seconds!`,
+        content: `Requested by: ${details.user.toString()}. This thread will be deleted in \`15\`seconds!`,
         embeds: [
           new MessageEmbed()
             .setDescription(`${st}\n${value}`)
@@ -308,7 +331,7 @@ module.exports = {
       collector.stop();
       setTimeout(async () => {
         if (thread) await thread.delete();
-        finalData.content = `Requested by: ${interaction.user.toString()}!`;
+        finalData.content = `Requested by: ${details.user.toString()}!`;
         finalData.components = [
           new MessageActionRow().addComponents([
             new MessageButton()
@@ -318,10 +341,10 @@ module.exports = {
           ]),
         ];
 
-        const feedback = await interaction.channel.send(finalData);
+        const feedback = await context.channel.send(finalData);
         const fcollector = feedback.createMessageComponentCollector({
           filter: (i) =>
-            i.user.id === interaction.user.id && i.customId === "feedback",
+            i.user.id === details.user.id && i.customId === "feedback",
           time: 15000,
           max: 1,
         });
@@ -356,8 +379,8 @@ module.exports = {
     collector.on("end", async (c, r) => {
       if (r === "time") {
         if (thread) await thread.delete();
-        await interaction.followUp({
-          content: interaction.user.toString(),
+        await context.channel.send({
+          content: details.user.toString(),
           embeds: [
             makeEmbed(
               "Your thread was deleted due to inactivity for `60` seconds!"

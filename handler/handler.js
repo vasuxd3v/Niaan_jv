@@ -25,7 +25,6 @@ readdirSync("./commands").forEach(async (dir) => {
     };
 
     let option = name === "No command name." ? "❌" : "✅";
-
     console.log(`Loaded Slash Command ${option} | ${name}`);
 
     if (option === "✅") {
@@ -37,11 +36,7 @@ readdirSync("./commands").forEach(async (dir) => {
           };
         });
 
-      client.commands.set(name, {
-        ...data,
-        run: file.run,
-      });
-
+      client.commands.set(name, file);
       commands.push(data);
     }
   });

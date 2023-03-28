@@ -3,6 +3,7 @@ const {
   CommandInteraction,
   CommandInteractionOptionResolver,
   Client,
+  Message,
 } = require("discord.js");
 
 module.exports = {
@@ -20,20 +21,30 @@ module.exports = {
   /**
    *
    * @param {Client} client
-   * @param {CommandInteraction} interaction
-   * @param {CommandInteractionOptionResolver} options
+   * @param {CommandInteraction | Message} context
+   * @param {CommandInteractionOptionResolver | String[]} options
+   * @param {Boolean} isMessage
    */
-  async run(client, interaction, options) {
+  async run(client, context, options, isMessage) {
+    console.log(isMessage);
+    const details = {
+      user: isMessage ? context.author : context.user,
+    };
+
     const itemName = options.getString("name");
     const items = client.items;
     const foundItem = items.find(
-      (i) => i.name && i.name.toLowerCase() === itemName.toLowerCase()
+      (i) =>
+        i.name &&
+        (i.name.toLowerCase() === itemName.toLowerCase() ||
+          i.name.toLowerCase().includes(itemName.toLowerCase()) ||
+          itemName.toLowerCase().includes(i.name.toLowerCase()))
     );
 
     if (!foundItem) {
-      return await interaction.reply({
-        content: `❌ ${interaction.user}, this item does not exist! Use \`/show\` command to see the list of available items!!`,
-        allowedMentions: { users: [interaction.user.id] },
+      return await context.reply({
+        content: `❌ ${details.user}, this item does not exist! Use \`/show\` command to see the list of available items!!`,
+        allowedMentions: { users: [details.user.id] },
         ephemeral: true,
       });
     }
@@ -74,8 +85,8 @@ module.exports = {
 
     if (foundItem.url) embed.setThumbnail(foundItem.url);
 
-    await interaction.reply({
-      content: `✅ ${interaction.user}, here are the details for **${foundItem.name}**:`,
+    await context.reply({
+      content: `✅ ${details.user}, here are the details for **${foundItem.name}**:`,
       embeds: [embed],
     });
   },
