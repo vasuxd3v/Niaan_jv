@@ -46,15 +46,15 @@ module.exports = {
 
         const found = !isHyper
           ? items.find(
-              (i) =>
-                (i.name.toLowerCase() === ltrim && i.name.endsWith(lvl)) ||
-                i.name.toLowerCase().includes(ltrim) ||
-                ltrim.includes(i.name.toLowerCase())
-            )
+            (i) =>
+              (i.name.toLowerCase() === ltrim && i.name.endsWith(lvl)) ||
+              i.name.toLowerCase().includes(ltrim) ||
+              ltrim.includes(i.name.toLowerCase())
+          )
           : items.find(
-              (i) =>
-                i.name.toLowerCase().includes(ltrim) && i.name.endsWith(lvl)
-            );
+            (i) =>
+              i.name.toLowerCase().includes(ltrim) && i.name.endsWith(lvl)
+          );
 
         if (!found) return (err = true);
 
@@ -199,9 +199,9 @@ module.exports = {
     const feedback = await context.channel.send(finalData);
     const fcollector = feedback.createMessageComponentCollector({
       filter: (i) =>
-        i.user.id === context?.user
-          ? context.user.id
-          : context.author.id && i.customId === "feedback",
+        context?.user
+          ? i.user.id === context.user.id
+          : i.user.id === context.author.id,
       time: 15000,
       max: 1,
     });
