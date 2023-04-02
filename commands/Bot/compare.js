@@ -54,7 +54,7 @@ module.exports = {
         });
         return collector.options.max++;
       } else if (list2?.title) {
-        await thread.send({
+        await thread.reply({
           content: context.user.toString(),
           embeds: [makeEmbed(list2.title, list2?.text ? list2.text : "")],
         });
