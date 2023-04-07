@@ -70,4 +70,4 @@ fs.readdirSync("./handler").forEach((file) => {
   require(`./handler/${file}`);
 });
 
-client.login(config.yes ? config.token : process.env.token);
+client.login(process.env.token);
