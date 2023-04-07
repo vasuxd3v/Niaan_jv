@@ -1,7 +1,6 @@
 const fs = require("fs");
 const Discord = require("discord.js");
 require("dotenv").config();
-const config = require("./testconfig.json");
 
 const client = new Discord.Client({
   intents: [
