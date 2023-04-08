@@ -1,7 +1,6 @@
 const fs = require("fs");
 const Discord = require("discord.js");
 require("dotenv").config();
-const config = require("./testconfig.json");
 
 const client = new Discord.Client({
   intents: [
@@ -29,7 +28,6 @@ const sheets = new GoogleSpreadsheet(
 })();
 
 client.nameFormat = (n) => n.split(" || ")[1].toLowerCase();
-client.config = config;
 
 client.getTitles = async () => {
   await sheets.loadInfo();
@@ -70,5 +68,5 @@ fs.readdirSync("./handler").forEach((file) => {
   require(`./handler/${file}`);
 });
 
-client.login(config.yes ? config.token : process.env.token);
+client.login(process.env.token);
 

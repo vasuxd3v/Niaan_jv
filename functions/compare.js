@@ -44,17 +44,18 @@ module.exports = {
         }
         if (founds.includes(ltrim)) return;
 
-        const found = !isHyper
-          ? items.find(
-            (i) =>
-              (i.name.toLowerCase() === ltrim && i.name.endsWith(lvl)) ||
-              i.name.toLowerCase().includes(ltrim) ||
-              ltrim.includes(i.name.toLowerCase())
-          )
-          : items.find(
-            (i) =>
-              i.name.toLowerCase().includes(ltrim) && i.name.endsWith(lvl)
-          );
+        let found = items.find((i) => i.name.toLowerCase() === ltrim);
+        if (!found)
+          found = !isHyper
+            ? items.find(
+                (i) =>
+                  i.name.toLowerCase().includes(ltrim) ||
+                  ltrim.includes(i.name.toLowerCase())
+              )
+            : items.find(
+                (i) =>
+                  i.name.toLowerCase().includes(ltrim) && i.name.endsWith(lvl)
+              );
 
         if (!found) return (err = true);
 

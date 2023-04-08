@@ -26,20 +26,21 @@ module.exports = {
    * @param {Boolean} isMessage
    */
   async run(client, context, options, isMessage) {
-    console.log(isMessage);
     const details = {
       user: isMessage ? context.author : context.user,
     };
 
     const itemName = options.getString("name");
     const items = client.items;
-    const foundItem = items.find(
-      (i) =>
-        i.name &&
-        (i.name.toLowerCase() === itemName.toLowerCase() ||
-          i.name.toLowerCase().includes(itemName.toLowerCase()) ||
-          itemName.toLowerCase().includes(i.name.toLowerCase()))
+    let foundItem = items.find(
+      (i) => i.name.toLowerCase() === itemName.toLowerCase()
     );
+    if (!foundItem)
+      foundItem = items.find(
+        (i) =>
+          i.name.toLowerCase().includes(itemName.toLowerCase()) ||
+          itemName.toLowerCase().includes(i.name.toLowerCase())
+      );
 
     if (!foundItem) {
       return await context.reply({

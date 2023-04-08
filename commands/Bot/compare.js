@@ -47,19 +47,16 @@ module.exports = {
       const list1 = compare.check(set1);
       const list2 = compare.check(set2);
 
-      if (list1?.title) {
-        await thread.send({
-          content: context.user.toString(),
+      if (list1?.title)
+        return await context.channel.send({
+          content: context.author.toString(),
           embeds: [makeEmbed(list1.title, list1?.text ? list1.text : "")],
         });
-        return collector.options.max++;
-      } else if (list2?.title) {
-        await thread.reply({
-          content: context.user.toString(),
+      if (list2?.title)
+        return await context.channel.send({
+          content: context.author.toString(),
           embeds: [makeEmbed(list2.title, list2?.text ? list2.text : "")],
         });
-        return collector.options.max++;
-      }
 
       const lists = [list1, list2];
       const { st, value } = compare.calc(lists);

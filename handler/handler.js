@@ -43,9 +43,7 @@ readdirSync("./commands").forEach(async (dir) => {
 });
 
 client.on("ready", async () => {
-  const g = await client.guilds.fetch(
-    client.config.yes ? client.config.guild : process.env.guild
-  );
+  const g = await client.guilds.fetch(process.env.guild);
   await g.commands.set(commands);
   console.log(chalk.green.blue.bold("Commands set!"));
 });

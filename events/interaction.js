@@ -33,9 +33,7 @@ client.on("interactionCreate", async (interaction) => {
     const { fields, customId } = interaction;
     if (customId === "feedback") {
       const feedback = fields.getTextInputValue("feedbacktext");
-      const privateChannel = await client.channels.fetch(
-        client.config.yes ? client.config.channel : process.env.channel
-      );
+      const privateChannel = await client.channels.fetch(process.env.channel);
 
       await interaction.reply({
         content: "Your feedback has been successfully sent! Thank you so much!",
