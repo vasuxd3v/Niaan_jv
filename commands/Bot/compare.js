@@ -11,6 +11,7 @@ const compare = require("../../functions/compare");
 
 module.exports = {
   name: "compare",
+  defer: true,
   description: "Compare your items!",
   /**
    *
@@ -78,7 +79,7 @@ module.exports = {
             c.name === `${context.user.username}-thread`
         )
       )
-        return await context.reply({
+        return await context.followUp({
           content: context.user.toString(),
           embeds: [makeEmbed(`You can not start the process again!!`)],
           ephemeral: true,
@@ -92,7 +93,7 @@ module.exports = {
 
       await thread.members.add(context.user.id);
 
-      await context.reply({
+      await context.followUp({
         content: context.user.toString(),
         embeds: [makeEmbed(`Please move to your private thread ${thread}!`)],
         ephemeral: true,

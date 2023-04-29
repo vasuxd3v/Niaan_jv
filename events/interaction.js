@@ -6,6 +6,9 @@ client.on("interactionCreate", async (interaction) => {
     let cmd = client.commands.get(interaction.commandName);
     if (!cmd) return;
 
+    if (cmd.defer)
+      await interaction.deferReply({ ephemeral: true }).catch((e) => null);
+
     let { options } = interaction;
 
     cmd.run(client, interaction, options);
