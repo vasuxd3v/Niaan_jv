@@ -43,10 +43,15 @@ readdirSync("./commands").forEach(async (dir) => {
 });
 
 client.on("ready", async () => {
-  const g = await client.guilds.fetch(process.env.guild);
-  await g.commands.set(commands);
-  console.log(chalk.green.blue.bold("Commands set!"));
+  try {
+    // Fetch all global commands
+    await client.application.commands.set(commands);
+    console.log(chalk.green.blue.bold("Global commands set!"));
+  } catch (error) {
+    console.error(chalk.red.bold("Error setting global commands:"), error);
+  }
 });
+
 
 console.log("-".repeat(30));
 

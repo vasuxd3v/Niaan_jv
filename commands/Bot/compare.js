@@ -186,7 +186,8 @@ module.exports = {
           embeds: [
             new MessageEmbed()
               .setDescription(`${st}\n${value}`)
-              .setColor("#27476e"),
+              .setColor("#27476e")
+              .setFooter({ text: 'Developer - spiteimagine'}),
           ],
         };
 
@@ -198,7 +199,7 @@ module.exports = {
           finalData.content = `Requested by: ${context.user.toString()}!`;
 
           await compare.feedback(context, finalData);
-        }, 15000);
+        }, 30000);
       });
 
       collector.on("end", async (c, r) => {

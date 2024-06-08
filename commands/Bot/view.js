@@ -78,10 +78,10 @@ module.exports = {
 
     if (foundItem.demand > 3) {
       embed.setFooter({
-        text: "Red color shows higher demand of item\nNote- demands are out of 5",
+        text: "Red color shows higher demand of item\nNote- demands are out of 5\nDeveloper - spiteimagine",
       }); // add a footer message to the embed
     } else {
-      embed.setFooter({ text: "Note- demands are out of 5" });
+      embed.setFooter({ text: "Note- demands are out of 5\nDeveloper - spiteimagine" });
     }
 
     if (foundItem.url) embed.setThumbnail(foundItem.url);

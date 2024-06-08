@@ -15,17 +15,17 @@ const client = new Discord.Client({
 
 module.exports = client;
 client.commands = new Discord.Collection();
-
 /* SPREADSHEET */
 const { GoogleSpreadsheet } = require("google-spreadsheet");
+const {JWT} = require('google-auth-library');
 const creds = require("./creds.json");
-const sheets = new GoogleSpreadsheet(
-  "1M5sv4lnwe8wyhs8juPzaCdhd7t4Jc9d6aInmQhOiMns"
-);
+const useServiceAuth = new JWT({
+  email: creds.client_email,
+  key: creds.private_key,
+  scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+});
 
-(async () => {
-  await sheets.useServiceAccountAuth(creds); // LOAD
-})();
+const sheets = new GoogleSpreadsheet('1IH3zqEs1YPXVL8PXabMnCpd9XYDvDifV15_A24ZmQjY', useServiceAuth);
 
 client.nameFormat = (n) => n.split(" || ")[1].toLowerCase();
 
@@ -41,10 +41,12 @@ client.getItems = async (item) => {
     t.toLowerCase().includes(item)
   );
 
-  const rows = await sheets.sheetsByTitle[sheet]?.getRows();
-  return rows?.map((row) => {
+  const sheetObj = sheets.sheetsByTitle[sheet];
+  const rows = await sheetObj.getRows();
+  const headers = sheetObj.headerValues;
+
+  return rows.map((row) => {
     const data = row._rawData;
-    const headers = row._sheet.headerValues;
     const obj = {};
     data.forEach((o, i) =>
       o ? (obj[headers[i].toLowerCase()] = o.trim()) : null
@@ -69,4 +71,3 @@ fs.readdirSync("./handler").forEach((file) => {
 });
 
 client.login(process.env.token);
-

@@ -48,8 +48,9 @@ module.exports = {
         const compareEmbed = new MessageEmbed()
           .setTitle("Compare Command")
           .setDescription(
-            "**The Compare command**\nUse the `/compare` command: To start the comparison process, use the `/compare` command in your server's chat. This will initiate the comparison process and prompt you to enter the first set of items.\n **__Enter the first set__**: Once you've used the `/compare` command,Jailbreak Values will prompt you to enter the first set of items you want to compare. For example, if you want to compare two items, you would enter the names of those items.\n **__Enter the second set__**: After you've entered the first set of items, Jailbreak Values will prompt you to enter the second set of items. This could be the items that another user has, or it could be the items you want to compare the first set to. \n **__View your result__**: Once you've entered both sets of items, **Jailbreak Values** will compare them and display the result in your server's chat. This result will show you the differences between the two sets of items, including any items that are in one set but not the other. \n -------------------------------------------------------------------------------- \n **__Important Note__** :- You are allowed to enter 8 different items at once in each set. In case you have multiples of same item you can use `(number) {item name}` for example :- `3 brulee` \n You have you use a comma after entering an item. For example :-  `Torpedo, spinner, Brulee, Checker` or like  `2 torpedo, 4 Steed` \n -------------------------------------------------------------------------------- \n So that's it! With the /compare command and **Jailbreak Values**, you can easily compare trades and find the items you're looking for."
+            "**The Compare command**\n1.) Use the `/compare` command\n└── ●  Type **`/compare`** to start.\n \n2.) Private Thread\n└── ●  The bot will create a private thread for you.\n \n3.) Get Started\n└── ●  Move to that thread and click the **`Get Started`** button.\n \n 4.) Enter Items\n└── ●  Type the first set of items, separated by commas.\n└── ●  Then, type the second set of items.\n \n5.) Get Results\n└── ●  View your comparison results.\n \n**Using Prefix-Based Commands**\n \n``` ●  Use the prefix q. followed by the command.\n ●  Format: q.compare 'set1 items' to 'set2 items'\n ●  Example: q.compare torpedo to beam\n ●  Note: Use 'to' to separate the two sets.```"
           )
+          .setFooter({text: "Developer - spiteimagine"})
           .setColor("#27476e");
 
         const watchTutorialButton = new MessageButton()
@@ -61,7 +62,7 @@ module.exports = {
           watchTutorialButton
         );
 
-        await context.channel.send({
+        await context.reply({
           embeds: [compareEmbed],
           components: [actionRow],
         });
@@ -70,19 +71,21 @@ module.exports = {
         const showEmbed = new MessageEmbed()
           .setTitle("Show Command")
           .setDescription(
-            "The **`/show`** command is a very usefull command for those playing **jailbreak**, as it provides an easy-to-use interface for viewing essential information about various in-game items. This feature is particularly useful for those who are new to the **tranding** or those who want to stay informed about the current state of the market.\n By using the `/show` command, players can quickly see the names of various jailbreak items, their current demand, and their prices in Brulee, a virtual currency used within the game. These items are categorized according to their type, making it simple for players to find the information they need.\n -------------------------------------------------------------------------------- \n One of the standout features of the `/show` command is its user-friendly design. Even those who are unfamiliar with the trading, in general, will find it easy to navigate and understand. This simplicity is essential, as it ensures that all players, regardless of their experience level, can access and utilize this critical **Jailbreak Values Bot**"
+            "The **`/show`** command: \n By using the `/show` command, players can quickly see the names of various jailbreak items, their current demand, and their prices in Brulee, a virtual currency. These items are categorized according to their type."
           )
+          .setFooter({text: "Developer - spiteimagine"})
           .setColor("#27476e");
-        await context.channel.send({ embeds: [showEmbed] });
+        await context.reply({ embeds: [showEmbed] });
         break;
       case "view":
         const viewEmbed = new MessageEmbed()
           .setTitle("View Command")
           .setDescription(
-            "**The View Command**\n **__Use the `/view` command__**: To get information about a specific item, use the `/view` command in your server's chat. This will initiate the process and prompt you to enter the name of the item you want to view.\n **__Enter the item name__**: Once you've used the `/view` command, **Jailbreak Values** will prompt you to enter the name of the item you want to view. For example, if you want to view information about a particular item, you would enter the name of that item.\n **__View the response__**: After you've entered the item name, **Jailbreak Values** will respond with information about that item. This information will include the item's demand, value, and other relevant details.\n So that's it! With the `/view` command and **Jailbreak Values** , you can easily information about items and make informed decisions about trading and acquiring new items."
+            "**The View Command**\n \n **__Use the `/view` command__**: \n To get information about a specific item."
           )
+          .setFooter({text: "Developer - spiteimagine"})
           .setColor("#27476e");
-        await context.channel.send({ embeds: [viewEmbed] });
+        await context.reply({ embeds: [viewEmbed] });
         break;
       default:
         const errorEmbed = new MessageEmbed()
@@ -104,7 +107,7 @@ module.exports = {
     collector.on("collect", async (buttonInteraction) => {
       if (buttonInteraction.customId === "watch_tutorial") {
         const videoUrl =
-          "https://cdn.discordapp.com/attachments/1074963439954427934/1075046232130588712/The_comparsion_command_tutorial_-_The_Jailbreak_Union.mp4";
+          "https://youtu.be/-B0s5agL9pU";
         await buttonInteraction.reply({
           content: `Here's the video tutorial: ${videoUrl}`,
           ephemeral: true,

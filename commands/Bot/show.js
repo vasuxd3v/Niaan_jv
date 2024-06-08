@@ -53,7 +53,7 @@ module.exports = {
         )
         .setColor("#27476e")
         .setFooter({
-          text: `Page: ${i + 1}/${pages.length}`,
+          text: `Page: ${i + 1}/${pages.length}\nDeveloper - spiteimagine`,
         });
 
       return embed;

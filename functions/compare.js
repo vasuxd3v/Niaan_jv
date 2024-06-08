@@ -24,7 +24,7 @@ module.exports = {
     const founds = [];
     const list = set
       .map((c) => {
-        const split = c.trim().split(" ");
+        const split = c.trim().toLowerCase().split(" "); // Convert to lowercase here
         let amount,
           ltrim,
           lvl = false;
@@ -44,24 +44,24 @@ module.exports = {
         }
         if (founds.includes(ltrim)) return;
 
-        let found = items.find((i) => i.name.toLowerCase() === ltrim);
+        let found = items.find((i) => i.name.toLowerCase() === ltrim); // Convert to lowercase here
         if (!found)
           found = !isHyper
             ? items.find(
                 (i) =>
-                  i.name.toLowerCase().includes(ltrim) ||
-                  ltrim.includes(i.name.toLowerCase())
+                  i.name.toLowerCase().includes(ltrim) || // Convert to lowercase here
+                  ltrim.includes(i.name.toLowerCase()) // Convert to lowercase here
               )
             : items.find(
                 (i) =>
-                  i.name.toLowerCase().includes(ltrim) && i.name.endsWith(lvl)
+                  i.name.toLowerCase().includes(ltrim) && i.name.endsWith(lvl) // Convert to lowercase here
               );
 
         if (!found) return (err = true);
 
         const dupes = set.filter((n) => {
-          let sp = n.trim().split(" ");
-          return sp[sp.length > 1 ? 1 : 0].toLowerCase() === ltrim;
+          let sp = n.trim().toLowerCase().split(" "); // Convert to lowercase here
+          return sp[sp.length > 1 ? 1 : 0].toLowerCase() === ltrim; // Convert to lowercase here
         }).length;
 
         if (dupes > 1) {
