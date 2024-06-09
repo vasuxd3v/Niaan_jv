@@ -5,7 +5,6 @@ require("dotenv").config();
 const client = new Discord.Client({
   intents: [
     "GUILDS",
-    "GUILD_PRESENCES",
     "GUILD_MEMBERS",
     "GUILD_MESSAGES",
     "GUILD_MESSAGE_REACTIONS",
