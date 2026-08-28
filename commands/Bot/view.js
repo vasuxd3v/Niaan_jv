@@ -1,10 +1,4 @@
-const {
-  MessageEmbed,
-  CommandInteraction,
-  CommandInteractionOptionResolver,
-  Client,
-  Message,
-} = require("discord.js");
+const { EmbedBuilder, ApplicationCommandOptionType } = require("discord.js");
 
 module.exports = {
   name: "view",
@@ -13,22 +7,13 @@ module.exports = {
     {
       name: "name",
       required: true,
-      type: "STRING",
+      type: ApplicationCommandOptionType.String,
       description: "🔍 The name of the item you are searching for.",
       autocomplete: true,
     },
   ],
-  /**
-   *
-   * @param {Client} client
-   * @param {CommandInteraction | Message} context
-   * @param {CommandInteractionOptionResolver | String[]} options
-   * @param {Boolean} isMessage
-   */
   async run(client, context, options, isMessage) {
-    const details = {
-      user: isMessage ? context.author : context.user,
-    };
+    const user = isMessage ? context.author : context.user;
 
     const itemName = options.getString("name");
     const items = client.items;
@@ -44,13 +29,12 @@ module.exports = {
 
     if (!foundItem) {
       return await context.reply({
-        content: `❌ ${details.user}, this item does not exist! Use \`/show\` command to see the list of available items!!`,
-        allowedMentions: { users: [details.user.id] },
-        ephemeral: true,
+        content: `❌ ${user}, this item does not exist! Use \`/show\` command to see the list of available items!!`,
+        allowedMentions: { users: [user.id] },
       });
     }
 
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
       .setTitle(`🔎 ${foundItem.name}`)
       .setColor("#FCD12A")
       .setDescription(`Here are the details for **${foundItem.name}**:`);
@@ -76,18 +60,17 @@ module.exports = {
       });
     });
 
-    if (foundItem.demand > 3) {
-      embed.setFooter({
-        text: "Red color shows higher demand of item\nNote- demands are out of 5\nDeveloper - spiteimagine",
-      }); // add a footer message to the embed
-    } else {
-      embed.setFooter({ text: "Note- demands are out of 5\nDeveloper - spiteimagine" });
-    }
+    embed.setFooter({
+      text:
+        (foundItem.demand > 3
+          ? "Red color shows higher demand of item\n"
+          : "") + "Note- demands are out of 5\nDeveloper - spiteimagine",
+    });
 
     if (foundItem.url) embed.setThumbnail(foundItem.url);
 
     await context.reply({
-      content: `✅ ${details.user}, here are the details for **${foundItem.name}**:`,
+      content: `✅ ${user}, here are the details for **${foundItem.name}**:`,
       embeds: [embed],
     });
   },

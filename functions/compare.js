@@ -1,11 +1,10 @@
 const {
-  Message,
-  CommandInteraction,
-  MessageOptions,
-  Modal,
-  MessageActionRow,
-  TextInputComponent,
-  MessageButton,
+  ModalBuilder,
+  ActionRowBuilder,
+  TextInputBuilder,
+  TextInputStyle,
+  ButtonBuilder,
+  ButtonStyle,
 } = require("discord.js");
 const client = require("../index");
 
@@ -189,12 +188,12 @@ module.exports = {
    */
   feedback: async (context, finalData) => {
     finalData.components = [
-      new MessageActionRow().addComponents([
-        new MessageButton()
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
           .setLabel("Feedback")
           .setCustomId("feedback")
-          .setStyle("PRIMARY"),
-      ]),
+          .setStyle(ButtonStyle.Primary)
+      ),
     ];
 
     const feedback = await context.channel.send(finalData);
@@ -208,26 +207,26 @@ module.exports = {
     });
 
     fcollector.on("collect", async (i) => {
-      const modal = new Modal()
+      const modal = new ModalBuilder()
         .setTitle("Feedback form")
         .setCustomId("feedback")
-        .addComponents([
-          new MessageActionRow().addComponents([
-            new TextInputComponent()
+        .addComponents(
+          new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
               .setLabel("Feedback")
               .setCustomId("feedbacktext")
               .setPlaceholder("Your feedback.")
-              .setStyle("PARAGRAPH")
-              .setRequired(true),
-          ]),
-        ]);
+              .setStyle(TextInputStyle.Paragraph)
+              .setRequired(true)
+          )
+        );
 
       await i.showModal(modal);
     });
 
-    fcollector.on("end", async (c, r) => {
+    fcollector.on("end", async () => {
       finalData.components[0].components[0].setDisabled(true);
-      await feedback.edit(finalData);
+      await feedback.edit(finalData).catch(() => null);
     });
   },
 };

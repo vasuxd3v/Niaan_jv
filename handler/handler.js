@@ -1,66 +1,61 @@
-const chalk = require("chalk");
-const fs = require("fs");
-const { readdirSync } = fs;
+const path = require("path");
+const { readdirSync } = require("fs");
+const { Events } = require("discord.js");
 const client = require("../index");
 
+const root = path.join(__dirname, "..");
 const commands = [];
 
 //SLASH COMMANDS
-console.log(chalk.blue.bold("SLASH COMMANDS 🟢"));
-readdirSync("./commands").forEach(async (dir) => {
-  const cmds = readdirSync(`./commands/${dir}/`).filter((file) =>
-    file.endsWith(".js")
+console.log("SLASH COMMANDS 🟢");
+for (const dir of readdirSync(path.join(root, "commands"))) {
+  const files = readdirSync(path.join(root, "commands", dir)).filter((f) =>
+    f.endsWith(".js")
   );
 
-  cmds.map(async (cmd) => {
-    let file = require(`../commands/${dir}/${cmd}`);
+  for (const cmd of files) {
+    const file = require(path.join(root, "commands", dir, cmd));
 
-    let name = file.name || "No command name.";
-    let description = file.description || "No description.";
-
-    const data = {
-      name,
-      description,
-      options: file.options,
-    };
-
-    let option = name === "No command name." ? "❌" : "✅";
-    console.log(`Loaded Slash Command ${option} | ${name}`);
-
-    if (option === "✅") {
-      if (name === "show")
-        data.options[0].choices = (await client.getTitles()).map((f) => {
-          return {
-            name: client.nameFormat(f),
-            value: client.nameFormat(f),
-          };
-        });
-
-      client.commands.set(name, file);
-      commands.push(data);
+    if (!file.name) {
+      console.log(`Loaded Slash Command ❌ | ${cmd} (no command name)`);
+      continue;
     }
-  });
-});
 
-client.on("ready", async () => {
-  try {
-    // Fetch all global commands
-    await client.application.commands.set(commands);
-    console.log(chalk.green.blue.bold("Global commands set!"));
-  } catch (error) {
-    console.error(chalk.red.bold("Error setting global commands:"), error);
+    client.commands.set(file.name, file);
+    commands.push({
+      name: file.name,
+      description: file.description || "No description.",
+      options: file.options,
+    });
+    console.log(`Loaded Slash Command ✅ | ${file.name}`);
   }
-});
-
+}
 
 console.log("-".repeat(30));
 
 //EVENTS
-console.log(chalk.yellow.bold("EVENTS 🟢"));
-readdirSync("./events").forEach(async (event) => {
-  const eventName = event.replace(".js", "");
-  require(`../events/${event}`);
-  console.log("Loaded Event ✅ | " + eventName);
-});
+console.log("EVENTS 🟢");
+for (const event of readdirSync(path.join(root, "events"))) {
+  require(path.join(root, "events", event));
+  console.log("Loaded Event ✅ | " + event.replace(".js", ""));
+}
 
 console.log("-".repeat(30));
+
+client.once(Events.ClientReady, async () => {
+  try {
+    // /show's category choices are the sheet tabs, so they're only known at runtime
+    const show = commands.find((c) => c.name === "show");
+    if (show) {
+      show.options[0].choices = (await client.getTitles()).map((f) => ({
+        name: client.nameFormat(f),
+        value: client.nameFormat(f),
+      }));
+    }
+
+    await client.application.commands.set(commands);
+    console.log("Global commands set!");
+  } catch (error) {
+    console.error("Error setting global commands:", error);
+  }
+});

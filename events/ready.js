@@ -1,27 +1,30 @@
+const { Events } = require("discord.js");
 const client = require("../index");
 
 //READY
-client.on("ready", async () => {
+client.once(Events.ClientReady, async () => {
   console.log(client.user.username + " is online!");
 
   // Update loop
   await update();
-  setInterval(async () => {
-    console.log("Spreadsheet: Data updated!");
-    await update();
-  }, 2 * 60000);
+  setInterval(update, 2 * 60000);
 });
 
 const update = async () => {
-  const items = (
-    await Promise.all(
-      (
-        await client.getTitles()
-      ).map(async (t) => await client.getItems(client.nameFormat(t)))
-    )
-  ).flat();
+  try {
+    const titles = await client.getTitles();
+    const items = (
+      await Promise.all(
+        titles.map((t) => client.getItems(client.nameFormat(t)))
+      )
+    ).flat();
 
-  items.forEach((i) => {
-    client.items.set(i.name, i);
-  });
+    items.forEach((i) => {
+      if (i.name) client.items.set(i.name, i);
+    });
+    console.log(`Spreadsheet: ${client.items.size} items cached.`);
+  } catch (e) {
+    // keep the last good cache rather than dying on a transient Sheets error
+    console.error("Spreadsheet update failed:", e.message);
+  }
 };

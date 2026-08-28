@@ -1,22 +1,40 @@
-const { MessageEmbed } = require("discord.js");
+const { EmbedBuilder, Events, MessageFlags } = require("discord.js");
 const client = require("../index");
+const { track } = require("../dashboard");
 
-client.on("interactionCreate", async (interaction) => {
-  if (interaction.isCommand()) {
-    let cmd = client.commands.get(interaction.commandName);
+client.on(Events.InteractionCreate, async (interaction) => {
+  if (interaction.isChatInputCommand()) {
+    const cmd = client.commands.get(interaction.commandName);
     if (!cmd) return;
 
-    if (cmd.defer)
-      await interaction.deferReply({ ephemeral: true }).catch((e) => null);
+    if (cmd.defer) {
+      await interaction
+        .deferReply(cmd.ephemeral ? { flags: MessageFlags.Ephemeral } : {})
+        .catch(() => null);
+    }
 
-    let { options } = interaction;
+    track(`/${interaction.commandName}`, {
+      user: interaction.user.username,
+      guild: interaction.guild?.name,
+    });
 
-    cmd.run(client, interaction, options);
+    try {
+      await cmd.run(client, interaction, interaction.options);
+    } catch (e) {
+      console.error(`Command ${interaction.commandName} failed:`, e);
+      const fail = {
+        content: "Something went wrong running that command.",
+        flags: MessageFlags.Ephemeral,
+      };
+      await (interaction.deferred || interaction.replied
+        ? interaction.followUp(fail)
+        : interaction.reply(fail)
+      ).catch(() => null);
+    }
   } else if (interaction.isAutocomplete()) {
-    const search = interaction.options.getString("name");
+    const search = interaction.options.getString("name") || "";
 
-    const items = client.items;
-    let find = items.filter(
+    let find = client.items.filter(
       (i) => i.name && i.name.toLowerCase().startsWith(search.toLowerCase())
     );
 
@@ -24,28 +42,31 @@ client.on("interactionCreate", async (interaction) => {
 
     await interaction
       .respond(
-        find.map((f) => {
-          return {
-            name: f.name,
-            value: f.name.toLowerCase(),
-          };
-        })
+        find.map((f) => ({
+          name: f.name,
+          value: f.name.toLowerCase(),
+        }))
       )
-      .catch((e) => {});
+      .catch(() => {});
   } else if (interaction.isModalSubmit()) {
     const { fields, customId } = interaction;
     if (customId === "feedback") {
       const feedback = fields.getTextInputValue("feedbacktext");
-      const privateChannel = await client.channels.fetch(process.env.channel);
 
       await interaction.reply({
         content: "Your feedback has been successfully sent! Thank you so much!",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
+
+      if (!process.env.channel) return;
+      const privateChannel = await client.channels
+        .fetch(process.env.channel)
+        .catch(() => null);
+      if (!privateChannel) return;
 
       await privateChannel.send({
         embeds: [
-          new MessageEmbed()
+          new EmbedBuilder()
             .setAuthor({
               name: interaction.user.username,
               iconURL: interaction.user.displayAvatarURL(),

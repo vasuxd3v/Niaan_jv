@@ -1,3 +1,6 @@
 node_modules
-testconfig.json
+.env
 .env2
+creds.json
+testconfig.json
+stats.json
