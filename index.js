@@ -1,72 +1,90 @@
 const fs = require("fs");
-const Discord = require("discord.js");
+const path = require("path");
+const { Client, Collection, GatewayIntentBits, Partials } = require("discord.js");
 require("dotenv").config();
 
-const client = new Discord.Client({
+const client = new Client({
   intents: [
-    "GUILDS",
-    "GUILD_MEMBERS",
-    "GUILD_MESSAGES",
-    "GUILD_MESSAGE_REACTIONS",
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
   ],
-  partials: ["GUILD_MEMBER", "CHANNEL", "REACTION", "USER"],
+  partials: [Partials.Channel],
 });
 
 module.exports = client;
-client.commands = new Discord.Collection();
+client.commands = new Collection();
+client.items = new Collection();
+
 /* SPREADSHEET */
 const { GoogleSpreadsheet } = require("google-spreadsheet");
-const {JWT} = require('google-auth-library');
-const creds = require("./creds.json");
-const useServiceAuth = new JWT({
+const { JWT } = require("google-auth-library");
+
+// creds come from GOOGLE_CREDENTIALS (raw JSON, for hosts with no filesystem)
+// or ./creds.json locally.
+const creds = process.env.GOOGLE_CREDENTIALS
+  ? JSON.parse(process.env.GOOGLE_CREDENTIALS)
+  : require("./creds.json");
+
+const auth = new JWT({
   email: creds.client_email,
-  key: creds.private_key,
-  scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+  key: creds.private_key.replace(/\\n/g, "\n"),
+  scopes: ["https://www.googleapis.com/auth/spreadsheets"],
 });
 
-const sheets = new GoogleSpreadsheet('1IH3zqEs1YPXVL8PXabMnCpd9XYDvDifV15_A24ZmQjY', useServiceAuth);
+const sheets = new GoogleSpreadsheet(
+  process.env.SHEET_ID || "1IH3zqEs1YPXVL8PXabMnCpd9XYDvDifV15_A24ZmQjY",
+  auth
+);
 
-client.nameFormat = (n) => n.split(" || ")[1].toLowerCase();
+// loadInfo() is a network round trip and used to run 2x per getItems(); cache it
+// so a slash command doesn't blow the 3s interaction ack window.
+let loadedAt = 0;
+const load = async () => {
+  if (Date.now() - loadedAt < 60_000) return;
+  await sheets.loadInfo();
+  loadedAt = Date.now();
+};
+
+client.nameFormat = (n) => (n.split(" || ")[1] || n).toLowerCase();
 
 client.getTitles = async () => {
-  await sheets.loadInfo();
+  await load();
   return Object.keys(sheets.sheetsByTitle);
 };
 
 client.getItems = async (item) => {
-  await sheets.loadInfo();
-
   const sheet = (await client.getTitles()).find((t) =>
     t.toLowerCase().includes(item)
   );
+  if (!sheet) return [];
 
   const sheetObj = sheets.sheetsByTitle[sheet];
   const rows = await sheetObj.getRows();
-  const headers = sheetObj.headerValues;
 
   return rows.map((row) => {
-    const data = row._rawData;
     const obj = {};
-    data.forEach((o, i) =>
-      o ? (obj[headers[i].toLowerCase()] = o.trim()) : null
-    );
+    for (const [key, value] of Object.entries(row.toObject())) {
+      if (value) obj[key.toLowerCase()] = String(value).trim();
+    }
     obj.category = sheet.replace("JV || ", "");
     return obj;
   });
 };
 
-client.items = new Discord.Collection();
+client.pager = (arr, n) =>
+  Array.from(Array(Math.ceil(arr.length / n)), (_, i) =>
+    arr.slice(i * n, i * n + n)
+  );
 
-Object.defineProperty(Array.prototype, "pager", {
-  value: function (n) {
-    return Array.from(Array(Math.ceil(this.length / n)), (_, i) =>
-      this.slice(i * n, i * n + n)
-    );
-  },
-});
+for (const file of fs.readdirSync(path.join(__dirname, "handler"))) {
+  require(path.join(__dirname, "handler", file));
+}
 
-fs.readdirSync("./handler").forEach((file) => {
-  require(`./handler/${file}`);
-});
+require("./dashboard");
 
-client.login(process.env.token);
+// A crash here takes the bot down in every server it's in; log and stay up.
+process.on("unhandledRejection", (e) => console.error("Unhandled rejection:", e));
+process.on("uncaughtException", (e) => console.error("Uncaught exception:", e));
+
+client.login(process.env.token || process.env.TOKEN);

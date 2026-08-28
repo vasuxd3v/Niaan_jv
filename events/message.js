@@ -1,6 +1,8 @@
+const { Events } = require("discord.js");
 const client = require("../index");
+const { track } = require("../dashboard");
 
-client.on("messageCreate", async (message) => {
+client.on(Events.MessageCreate, async (message) => {
   if (message.author.bot) return;
 
   let prefix = process.env.prefix || 'q.'; // Ensure prefix is defined
@@ -49,8 +51,22 @@ client.on("messageCreate", async (message) => {
       },
     };
 
-    command.run(client, message, options, true);
+    await run(command, message, options);
   } else {
-    command.run(client, message, args, true);
+    await run(command, message, args);
   }
 });
+
+const run = async (command, message, options) => {
+  track(`${process.env.prefix || "q."}${command.name}`, {
+    user: message.author.username,
+    guild: message.guild?.name,
+  });
+
+  try {
+    await command.run(client, message, options, true);
+  } catch (e) {
+    console.error(`Prefix command ${command.name} failed:`, e);
+    await message.reply("Something went wrong running that command.").catch(() => {});
+  }
+};
